@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "e2a2bbcfd9fe780e50e4633a741a3818f4dc8f7a9311f0f90319f8fe8836172d"
     },
+    "follow-up": {
+      "source": "humanizerai/agent-skills",
+      "sourceType": "github",
+      "computedHash": "9d2ef813672a826b72446afae136adede6b24c82a892bf478bd74113a9a5992e"
+    },
     "humanize-writing": {
       "source": "jpeggdev/humanize-writing",
       "sourceType": "github",
