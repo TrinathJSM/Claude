@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "3ed78ef6752e15cc67cc54e1cb5269b54543390709a1bb6b9df268ee7c2604b8"
     },
+    "stock-market-pro": {
+      "source": "sundial-org/awesome-openclaw-skills",
+      "sourceType": "github",
+      "computedHash": "8adbdfda7d726aa3124d7996318ca2baa14fc80da36720c1899396d67aa26c93"
+    },
     "stock-research-executor": {
       "source": "liangdabiao/claude-code-stock-deep-research-agent",
       "sourceType": "github",
