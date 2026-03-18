@@ -16,6 +16,11 @@
       "sourceType": "github",
       "computedHash": "664d5d3470ba6113825613afb1212d1705af7d86d5ed0b438e6961f77fb9e3bb"
     },
+    "readability": {
+      "source": "humanizerai/agent-skills",
+      "sourceType": "github",
+      "computedHash": "3f9614d72280d22cc3e0d0c6a9bb77abec6ea01dc841faf93885818c778c3ee7"
+    },
     "role-creator": {
       "source": "am-will/codex-skills",
       "sourceType": "github",
