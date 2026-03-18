@@ -50,6 +50,11 @@
       "source": "liangdabiao/claude-code-stock-deep-research-agent",
       "sourceType": "github",
       "computedHash": "0b3641a96bc48ee4566b225d846a2e2b493765fab1a4282c5ec22493c7f4bd80"
+    },
+    "xlsx": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "efd0c8011cf0677d8075cf93867ecec804f9a8754a777e1d2fdb46197e9c247f"
     }
   }
 }
