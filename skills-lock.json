@@ -10,6 +10,11 @@
       "source": "am-will/codex-skills",
       "sourceType": "github",
       "computedHash": "3ed78ef6752e15cc67cc54e1cb5269b54543390709a1bb6b9df268ee7c2604b8"
+    },
+    "stock-research-executor": {
+      "source": "liangdabiao/claude-code-stock-deep-research-agent",
+      "sourceType": "github",
+      "computedHash": "0b3641a96bc48ee4566b225d846a2e2b493765fab1a4282c5ec22493c7f4bd80"
     }
   }
 }
