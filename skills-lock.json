@@ -36,6 +36,11 @@
       "sourceType": "github",
       "computedHash": "664d5d3470ba6113825613afb1212d1705af7d86d5ed0b438e6961f77fb9e3bb"
     },
+    "product-marketing-context": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "21dd05f970ba54406d7405f92240853f809d0fed09ef6ca2a9204abcdd21548a"
+    },
     "readability": {
       "source": "humanizerai/agent-skills",
       "sourceType": "github",
