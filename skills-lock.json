@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "cold-email": {
+      "source": "humanizerai/agent-skills",
+      "sourceType": "github",
+      "computedHash": "2853e95dc8f0af2df2288a18bc1486e94529207634cc55293472dbf8946799c9"
+    },
     "commodities-quote": {
       "source": "octagonai/skills",
       "sourceType": "github",
