@@ -5,7 +5,7 @@ on:
     branches: [ "**" ]
   pull_request:
     branches: [ "**" ]
-  workflow_dispatch:    # manual trigger from Actions tab
+  workflow_dispatch:
 
 jobs:
   build:
@@ -22,64 +22,81 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      # Point Gradle at the Android SDK pre-installed on ubuntu-latest
+      - name: Configure Android SDK path
+        run: |
+          ANDROID_SDK=/usr/local/lib/android/sdk
+          echo "ANDROID_HOME=$ANDROID_SDK"     >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK" >> $GITHUB_ENV
+          echo "sdk.dir=$ANDROID_SDK" > FaceMorphApp/local.properties
+          yes | $ANDROID_SDK/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          echo "Android SDK configured at $ANDROID_SDK"
+
       - name: Make gradlew executable
         working-directory: FaceMorphApp
         run: chmod +x gradlew
 
-      # ── Generate placeholder assets so the build succeeds ─────────────────
-
+      # Generate placeholder assets so the build succeeds without binary files in the repo
       - name: Create placeholder Lottie animation
         run: |
           mkdir -p FaceMorphApp/app/src/main/assets/animations
           cat > FaceMorphApp/app/src/main/assets/animations/morphing.json << 'EOF'
-          {"v":"5.9.0","fr":30,"ip":0,"op":90,"w":512,"h":512,"nm":"FaceMorph","ddd":0,"assets":[],"layers":[{"ddd":0,"ind":1,"ty":4,"nm":"Circle","sr":1,"ks":{"o":{"a":0,"k":100},"r":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":0,"s":[0]},{"t":90,"s":[360]}]},"p":{"a":0,"k":[256,256,0]},"a":{"a":0,"k":[0,0,0]},"s":{"a":0,"k":[100,100,100]}},"ao":0,"shapes":[{"ty":"el","d":1,"s":{"a":0,"k":[200,200]},"p":{"a":0,"k":[0,0]},"nm":"Ellipse"},{"ty":"fl","c":{"a":0,"k":[0.482,0.188,0.745,1]},"o":{"a":0,"k":100},"r":1,"bm":0,"nm":"Fill"}],"ip":0,"op":90,"st":0,"bm":0}]}
-          EOF
+{"v":"5.9.0","fr":30,"ip":0,"op":90,"w":512,"h":512,"nm":"FaceMorph","ddd":0,"assets":[],"layers":[{"ddd":0,"ind":1,"ty":4,"nm":"Circle","sr":1,"ks":{"o":{"a":0,"k":100},"r":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":0,"s":[0]},{"t":90,"s":[360]}]},"p":{"a":0,"k":[256,256,0]},"a":{"a":0,"k":[0,0,0]},"s":{"a":0,"k":[100,100,100]}},"ao":0,"shapes":[{"ty":"el","d":1,"s":{"a":0,"k":[200,200]},"p":{"a":0,"k":[0,0]},"nm":"Ellipse"},{"ty":"fl","c":{"a":0,"k":[0.482,0.188,0.745,1]},"o":{"a":0,"k":100},"r":1,"bm":0,"nm":"Fill"}],"ip":0,"op":90,"st":0,"bm":0}]}
+EOF
 
-      - name: Create placeholder target images and launcher icons
+      - name: Create placeholder images and launcher icons
         run: |
           python3 - << 'PYEOF'
-          import struct, zlib, os
+import struct, zlib, os
 
-          def make_png(w, h, r, g, b):
-              def chunk(tag, data):
-                  crc = zlib.crc32(tag + data) & 0xffffffff
-                  return struct.pack('>I', len(data)) + tag + data + struct.pack('>I', crc)
-              sig  = b'\x89PNG\r\n\x1a\n'
-              ihdr = chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0))
-              raw  = (b'\x00' + bytes([r, g, b]) * w) * h
-              idat = chunk(b'IDAT', zlib.compress(raw))
-              iend = chunk(b'IEND', b'')
-              return sig + ihdr + idat + iend
+def make_png(w, h, r, g, b):
+    def chunk(tag, data):
+        crc = zlib.crc32(tag + data) & 0xffffffff
+        return struct.pack('>I', len(data)) + tag + data + struct.pack('>I', crc)
+    sig  = b'\x89PNG\r\n\x1a\n'
+    ihdr = chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0))
+    raw  = (b'\x00' + bytes([r, g, b]) * w) * h
+    idat = chunk(b'IDAT', zlib.compress(raw))
+    iend = chunk(b'IEND', b'')
+    return sig + ihdr + idat + iend
 
-          # Target face placeholders
-          os.makedirs('FaceMorphApp/app/src/main/assets/targets', exist_ok=True)
-          for name, rgb in [('celebrity_01.png',(200,150,120)),
-                             ('celebrity_02.png',(180,140,110)),
-                             ('celebrity_03.png',(220,160,130))]:
-              open(f'FaceMorphApp/app/src/main/assets/targets/{name}','wb').write(make_png(64,64,*rgb))
+os.makedirs('FaceMorphApp/app/src/main/assets/targets', exist_ok=True)
+for name, rgb in [('celebrity_01.png',(200,150,120)),
+                  ('celebrity_02.png',(180,140,110)),
+                  ('celebrity_03.png',(220,160,130))]:
+    open(f'FaceMorphApp/app/src/main/assets/targets/{name}','wb').write(make_png(64,64,*rgb))
 
-          # Launcher icons for every DPI bucket
-          for density, size in [('mipmap-mdpi',48),('mipmap-hdpi',72),
-                                 ('mipmap-xhdpi',96),('mipmap-xxhdpi',144),
-                                 ('mipmap-xxxhdpi',192)]:
-              d = f'FaceMorphApp/app/src/main/res/{density}'
-              os.makedirs(d, exist_ok=True)
-              png = make_png(size, size, 123, 47, 190)
-              open(f'{d}/ic_launcher.png','wb').write(png)
-              open(f'{d}/ic_launcher_round.png','wb').write(png)
+for density, size in [('mipmap-mdpi',48),('mipmap-hdpi',72),
+                      ('mipmap-xhdpi',96),('mipmap-xxhdpi',144),
+                      ('mipmap-xxxhdpi',192)]:
+    d = f'FaceMorphApp/app/src/main/res/{density}'
+    os.makedirs(d, exist_ok=True)
+    png = make_png(size, size, 123, 47, 190)
+    open(f'{d}/ic_launcher.png','wb').write(png)
+    open(f'{d}/ic_launcher_round.png','wb').write(png)
 
-          print('Assets generated successfully')
-          PYEOF
+print('All assets created successfully')
+PYEOF
 
-      # ── Build ─────────────────────────────────────────────────────────────
+      # Ensure BuildConfig is enabled (required by SettingsScreen.kt)
+      - name: Patch build.gradle.kts to enable BuildConfig
+        run: |
+          if ! grep -q "buildConfig" FaceMorphApp/app/build.gradle.kts; then
+            sed -i 's/buildFeatures {/buildFeatures {\n        buildConfig = true/' \
+              FaceMorphApp/app/build.gradle.kts
+          fi
 
+      # Build
       - name: Build debug APK
         working-directory: FaceMorphApp
         run: ./gradlew assembleDebug --stacktrace --no-daemon
         env:
-          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2g"
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx3g -Dorg.gradle.daemon=false"
 
       - name: Upload debug APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: FaceMorph-debug-${{ github.run_number }}
@@ -90,9 +107,12 @@ jobs:
         working-directory: FaceMorphApp
         run: ./gradlew assembleRelease --stacktrace --no-daemon
         env:
-          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2g"
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx3g -Dorg.gradle.daemon=false"
 
       - name: Upload release APK (unsigned)
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: FaceMorph-release-unsigned-${{ github.run_number }}
