@@ -2,6 +2,7 @@ package com.facemorphapp.presentation.screens.result
 
 import android.net.Uri
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -155,15 +156,15 @@ private fun BeforeAfterSlider(
         }
 
         // Divider line
-        Divider(
+        Box(
             modifier = Modifier
                 .fillMaxHeight()
                 .width(2.dp)
                 .align(Alignment.CenterStart)
                 .offset(x = with(androidx.compose.ui.platform.LocalDensity.current) {
-                    (layoutWidth * sliderPosition).dp
-                }),
-            color = MaterialTheme.colorScheme.primary
+                    (layoutWidth * sliderPosition / density).dp
+                })
+                .background(MaterialTheme.colorScheme.primary)
         )
 
         // Labels
