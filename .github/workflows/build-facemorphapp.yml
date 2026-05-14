@@ -1,10 +1,6 @@
 name: Build FaceMorph APK
 
 on:
-  push:
-    branches: [ "**" ]
-  pull_request:
-    branches: [ "**" ]
   workflow_dispatch:
 
 jobs:
@@ -12,9 +8,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Always check out the branch that contains the FaceMorphApp source.
-      # The workflow file lives on the default branch (required for workflow_dispatch),
-      # but the Android code lives on claude/offline-face-morphing-app-3vu2p.
       - name: Checkout FaceMorphApp source
         uses: actions/checkout@v4
         with:
@@ -27,21 +20,39 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # Point Gradle at the Android SDK pre-installed on ubuntu-latest
-      - name: Configure Android SDK path
+      - name: Setup Android SDK
         run: |
           ANDROID_SDK=/usr/local/lib/android/sdk
           echo "ANDROID_HOME=$ANDROID_SDK"     >> $GITHUB_ENV
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK" >> $GITHUB_ENV
-          echo "sdk.dir=$ANDROID_SDK" > FaceMorphApp/local.properties
-          yes | $ANDROID_SDK/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
-          echo "Android SDK configured at $ANDROID_SDK"
+          echo "sdk.dir=$ANDROID_SDK"          >  FaceMorphApp/local.properties
+
+          SDKMANAGER=$ANDROID_SDK/cmdline-tools/latest/bin/sdkmanager
+
+          # Print what is already installed
+          echo "=== Installed SDK packages ==="
+          $SDKMANAGER --list_installed 2>/dev/null || true
+
+          # Accept all licenses
+          yes | $SDKMANAGER --licenses 2>/dev/null || true
+
+          # Install the exact platform + build-tools the project needs
+          $SDKMANAGER "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
+          echo "=== SDK setup complete ==="
 
       - name: Make gradlew executable
         working-directory: FaceMorphApp
         run: chmod +x gradlew
 
-      # Generate placeholder assets so the build succeeds without binary files in the repo
+      - name: Print environment info
+        run: |
+          java -version
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls $ANDROID_HOME/platforms/
+          ls $ANDROID_HOME/build-tools/
+          ls FaceMorphApp/
+
       - name: Create placeholder Lottie animation
         run: |
           mkdir -p FaceMorphApp/app/src/main/assets/animations
@@ -83,18 +94,19 @@ for density, size in [('mipmap-mdpi',48),('mipmap-hdpi',72),
 print('All assets created successfully')
 PYEOF
 
-      # Ensure BuildConfig is enabled (required by SettingsScreen.kt)
-      - name: Patch build.gradle.kts to enable BuildConfig
+      - name: Patch build.gradle.kts — enable BuildConfig
         run: |
           if ! grep -q "buildConfig" FaceMorphApp/app/build.gradle.kts; then
             sed -i 's/buildFeatures {/buildFeatures {\n        buildConfig = true/' \
               FaceMorphApp/app/build.gradle.kts
+            echo "Patched buildConfig = true"
+          else
+            echo "buildConfig already present"
           fi
 
-      # Build
       - name: Build debug APK
         working-directory: FaceMorphApp
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: ./gradlew assembleDebug --stacktrace --no-daemon 2>&1
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
@@ -109,8 +121,9 @@ PYEOF
           retention-days: 30
 
       - name: Build release APK (unsigned)
+        if: success()
         working-directory: FaceMorphApp
-        run: ./gradlew assembleRelease --stacktrace --no-daemon
+        run: ./gradlew assembleRelease --no-daemon 2>&1
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
