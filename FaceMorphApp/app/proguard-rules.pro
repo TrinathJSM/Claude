@@ -1,0 +1,6 @@
+-keep class com.facemorphapp.** { *; }
+-keep class com.google.mlkit.** { *; }
+-keep class pl.droidsonroids.gif.** { *; }
+-dontwarn com.google.mlkit.**
+-keepattributes Signature
+-keepattributes *Annotation*
