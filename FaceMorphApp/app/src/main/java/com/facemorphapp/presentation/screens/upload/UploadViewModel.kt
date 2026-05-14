@@ -36,14 +36,14 @@ class UploadViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(sourceUri = uri, isDetecting = true, error = null) }
 
-            repository.loadBitmapFromUri(uri)
-                .onSuccess { bitmap ->
-                    _uiState.update { it.copy(sourceBitmap = bitmap) }
-                    runDetection(bitmap)
-                }
-                .onFailure { e ->
-                    _uiState.update { it.copy(isDetecting = false, error = e.message) }
-                }
+            val result = repository.loadBitmapFromUri(uri)
+            if (result.isFailure) {
+                _uiState.update { it.copy(isDetecting = false, error = result.exceptionOrNull()?.message) }
+                return@launch
+            }
+            val bitmap = result.getOrThrow()
+            _uiState.update { it.copy(sourceBitmap = bitmap) }
+            runDetection(bitmap)
         }
     }
 
