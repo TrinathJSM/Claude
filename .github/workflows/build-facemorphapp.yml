@@ -12,8 +12,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      # Always check out the branch that contains the FaceMorphApp source.
+      # The workflow file lives on the default branch (required for workflow_dispatch),
+      # but the Android code lives on claude/offline-face-morphing-app-3vu2p.
+      - name: Checkout FaceMorphApp source
         uses: actions/checkout@v4
+        with:
+          ref: claude/offline-face-morphing-app-3vu2p
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
