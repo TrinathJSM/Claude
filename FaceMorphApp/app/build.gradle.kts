@@ -53,7 +53,10 @@ android {
 
     kotlinOptions { jvmTarget = "17" }
 
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true   // required for BuildConfig.VERSION_NAME in SettingsScreen
+    }
 
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
 
