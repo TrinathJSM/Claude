@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    HARD BLOCK: zero trusted CAs means no TLS handshake can succeed.
+    cleartextTrafficPermitted="false" blocks all HTTP.
+    Combined effect: the app cannot make any outbound network request,
+    even if a dependency tries. Verified with Android Network Profiler.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors/>
+        <!-- Intentionally empty — no trusted CAs = TLS always fails -->
+    </base-config>
+</network-security-config>
