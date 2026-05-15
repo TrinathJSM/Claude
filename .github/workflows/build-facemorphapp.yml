@@ -83,11 +83,35 @@ jobs:
 
       - name: Build debug APK
         working-directory: FaceMorphApp
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee /tmp/build.log
+          exit ${PIPESTATUS[0]}
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
           GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx3g -Dorg.gradle.daemon=false"
+
+      - name: Show compilation errors on failure
+        if: failure()
+        run: |
+          echo "====== KOTLIN / JAVA COMPILATION ERRORS ======"
+          grep -n \
+            -e "^e: " \
+            -e "error:" \
+            -e "Unresolved reference" \
+            -e "None of the following candidates" \
+            -e "Overload resolution ambiguity" \
+            -e "Cannot access" \
+            -e "Type mismatch" \
+            -e "Expecting" \
+            -e "No value passed" \
+            -e "required:" \
+            -e "FAILED" \
+            /tmp/build.log | head -80 || true
+          echo ""
+          echo "====== LAST 60 LINES OF BUILD LOG ======"
+          tail -60 /tmp/build.log || true
 
       - name: Upload debug APK
         if: success()
