@@ -37,8 +37,6 @@ class CrashLogViewModel @Inject constructor(
         crashLogger.clearLog()
         logContent = ""
     }
-
-    fun getLogContent() = logContent
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +65,7 @@ fun CrashLogScreen(
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
                             putExtra(Intent.EXTRA_SUBJECT, "FaceMorph Crash Log")
-                            putExtra(Intent.EXTRA_TEXT, viewModel.getLogContent())
+                            putExtra(Intent.EXTRA_TEXT, viewModel.logContent)
                         }
                         context.startActivity(Intent.createChooser(intent, context.getString(R.string.crash_log_share)))
                     }) {
