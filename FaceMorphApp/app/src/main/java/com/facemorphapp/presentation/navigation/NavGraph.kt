@@ -1,9 +1,8 @@
 package com.facemorphapp.presentation.navigation
 
 import android.net.Uri
-import android.os.Bundle
-import android.os.Parcelable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -145,5 +144,3 @@ class NavStore {
     }
 }
 
-@Composable
-private fun <T> remember(init: () -> T): T = androidx.compose.runtime.remember(init)
