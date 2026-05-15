@@ -69,7 +69,7 @@ fun CrashLogScreen(
                             putExtra(Intent.EXTRA_SUBJECT, "FaceMorph Crash Log")
                             putExtra(Intent.EXTRA_TEXT, viewModel.getLogContent())
                         }
-                        context.startActivity(Intent.createChooser(intent, stringResource(R.string.crash_log_share)))
+                        context.startActivity(Intent.createChooser(intent, context.getString(R.string.crash_log_share)))
                     }) {
                         Icon(Icons.Default.Share, contentDescription = stringResource(R.string.crash_log_share))
                     }
