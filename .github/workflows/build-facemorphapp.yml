@@ -83,35 +83,37 @@ jobs:
 
       - name: Build debug APK
         working-directory: FaceMorphApp
-        run: |
-          set -o pipefail
-          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee /tmp/build.log
-          exit ${PIPESTATUS[0]}
+        run: ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee /tmp/build.log || true
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
           GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx3g -Dorg.gradle.daemon=false"
 
-      - name: Show compilation errors on failure
+      - name: Verify APK exists (fail if build failed)
+        run: |
+          if [ ! -f FaceMorphApp/app/build/outputs/apk/debug/app-debug.apk ]; then
+            echo "APK not produced — build failed. See error analysis step below."
+            exit 1
+          fi
+
+      - name: Show build errors on failure
         if: failure()
         run: |
-          echo "====== KOTLIN / JAVA COMPILATION ERRORS ======"
-          grep -n \
-            -e "^e: " \
-            -e "error:" \
-            -e "Unresolved reference" \
-            -e "None of the following candidates" \
-            -e "Overload resolution ambiguity" \
-            -e "Cannot access" \
-            -e "Type mismatch" \
-            -e "Expecting" \
-            -e "No value passed" \
-            -e "required:" \
-            -e "FAILED" \
-            /tmp/build.log | head -80 || true
+          echo "====== FIRST 120 LINES OF BUILD LOG ======"
+          head -120 /tmp/build.log || true
           echo ""
-          echo "====== LAST 60 LINES OF BUILD LOG ======"
-          tail -60 /tmp/build.log || true
+          echo "====== 150 LINES AROUND FIRST FAILED TASK ======"
+          first_fail=$(grep -n " FAILED\|Build failed\|Compilation error" /tmp/build.log | head -1 | cut -d: -f1)
+          if [ -n "$first_fail" ]; then
+            start=$(( first_fail > 120 ? first_fail - 120 : 1 ))
+            end=$(( first_fail + 30 ))
+            echo "--- failure at line $first_fail ---"
+            sed -n "${start},${end}p" /tmp/build.log
+          else
+            echo "No FAILED marker found; dumping middle of log:"
+            wc -l /tmp/build.log
+            tail -n +80 /tmp/build.log | head -200
+          fi
 
       - name: Upload debug APK
         if: success()
