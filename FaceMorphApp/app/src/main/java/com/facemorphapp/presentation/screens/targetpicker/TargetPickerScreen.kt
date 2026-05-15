@@ -63,7 +63,7 @@ fun TargetPickerScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            SearchBar(
+            TargetSearchField(
                 query = searchQuery,
                 onQueryChange = viewModel::onSearchChanged,
                 modifier = Modifier
@@ -87,7 +87,7 @@ fun TargetPickerScreen(
 }
 
 @Composable
-private fun SearchBar(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun TargetSearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
