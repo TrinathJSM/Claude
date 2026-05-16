@@ -48,25 +48,29 @@ object ColorCorrector {
         }
         if (count == 0) return source.copy(Bitmap.Config.ARGB_8888, true)
 
-        for (c in 0..2) { srcMeans[c] /= count; refMeans[c] /= count }
+        val countF = count.toFloat()
+        for (c in 0..2) {
+            srcMeans[c] = srcMeans[c] / countF
+            refMeans[c] = refMeans[c] / countF
+        }
 
         val srcVars = FloatArray(3)
         val refVars = FloatArray(3)
         for (i in srcPx.indices) {
             if (!mask[i]) continue
-            val ds0 = (srcPx[i] shr 16 and 0xFF) - srcMeans[0]
-            val ds1 = (srcPx[i] shr 8  and 0xFF) - srcMeans[1]
-            val ds2 = (srcPx[i]        and 0xFF) - srcMeans[2]
-            val dr0 = (refPx[i] shr 16 and 0xFF) - refMeans[0]
-            val dr1 = (refPx[i] shr 8  and 0xFF) - refMeans[1]
-            val dr2 = (refPx[i]        and 0xFF) - refMeans[2]
+            val ds0 = (srcPx[i] shr 16 and 0xFF).toFloat() - srcMeans[0]
+            val ds1 = (srcPx[i] shr 8  and 0xFF).toFloat() - srcMeans[1]
+            val ds2 = (srcPx[i]        and 0xFF).toFloat() - srcMeans[2]
+            val dr0 = (refPx[i] shr 16 and 0xFF).toFloat() - refMeans[0]
+            val dr1 = (refPx[i] shr 8  and 0xFF).toFloat() - refMeans[1]
+            val dr2 = (refPx[i]        and 0xFF).toFloat() - refMeans[2]
             srcVars[0] += ds0 * ds0; srcVars[1] += ds1 * ds1; srcVars[2] += ds2 * ds2
             refVars[0] += dr0 * dr0; refVars[1] += dr1 * dr1; refVars[2] += dr2 * dr2
         }
 
         val ratios = FloatArray(3) { c ->
-            val srcStd = sqrt(srcVars[c] / count)
-            val refStd = sqrt(refVars[c] / count)
+            val srcStd = sqrt(srcVars[c] / countF)
+            val refStd = sqrt(refVars[c] / countF)
             if (srcStd < 1f) 1f else refStd / srcStd
         }
 
