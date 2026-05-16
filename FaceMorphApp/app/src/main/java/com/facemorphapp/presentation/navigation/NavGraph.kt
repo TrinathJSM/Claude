@@ -84,8 +84,11 @@ fun FaceMorphNavGraph() {
                 targetUri  = targetUri,
                 sourceFace = sourceFace,
                 targetFace = targetFace,
-                onComplete = { resultUri ->
+                onComplete = { resultUri, durationMs, landmarkCount, morphMode ->
                     navStore.resultUri = resultUri
+                    navStore.durationMs = durationMs
+                    navStore.landmarkCount = landmarkCount
+                    navStore.morphMode = morphMode
                     navController.navigate(Screen.Result.route) {
                         popUpTo(Screen.Processing.route) { inclusive = true }
                     }

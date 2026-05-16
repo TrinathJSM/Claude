@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.airbnb.lottie.compose.*
 import com.facemorphapp.R
 import com.facemorphapp.domain.model.FaceDetectionResult
+import com.facemorphapp.domain.model.MorphMode
 import com.facemorphapp.domain.model.MorphStep
 
 private val PIPELINE_STEPS = listOf(
@@ -37,7 +38,7 @@ fun ProcessingScreen(
     targetUri: Uri,
     sourceFace: FaceDetectionResult,
     targetFace: FaceDetectionResult,
-    onComplete: (Uri) -> Unit,
+    onComplete: (resultUri: Uri, durationMs: Long, landmarkCount: Int, morphMode: MorphMode) -> Unit,
     onCancel: () -> Unit,
     viewModel: ProcessingViewModel = hiltViewModel()
 ) {
@@ -47,7 +48,9 @@ fun ProcessingScreen(
         viewModel.startMorph(sourceUri, targetUri, sourceFace, targetFace)
     }
     LaunchedEffect(uiState.isComplete) {
-        if (uiState.isComplete) uiState.resultUri?.let { onComplete(it) }
+        if (uiState.isComplete) uiState.resultUri?.let {
+            onComplete(it, uiState.durationMs, uiState.landmarkCount, uiState.morphMode)
+        }
     }
 
     val composition by rememberLottieComposition(LottieCompositionSpec.Asset("animations/morphing.json"))
