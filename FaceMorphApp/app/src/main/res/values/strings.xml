@@ -4,48 +4,94 @@
     <string name="app_tagline">100% Private. 100% Offline.</string>
     <string name="get_started">Get Started</string>
     <string name="recent_morphs">Recent Morphs</string>
+
+    <!-- Step banners -->
+    <string name="step_1_of_3">STEP 1 OF 3</string>
+    <string name="step_2_of_3">STEP 2 OF 3</string>
+    <string name="step_3_of_3">STEP 3 OF 3</string>
+    <string name="step_1_instruction">Pick a target face to morph into</string>
+    <string name="step_2_instruction">Upload a clear, front-facing photo of yourself</string>
+    <string name="step_3_instruction">Drag the slider to compare before and after</string>
+
+    <!-- Home screen -->
+    <string name="how_it_works">HOW IT WORKS</string>
+    <string name="step_home_1">① Pick\nTarget</string>
+    <string name="step_home_2">② Upload\nYour Photo</string>
+    <string name="step_home_3">③ Get\nYour Morph</string>
+
+    <!-- Target picker -->
     <string name="pick_target">Choose a Target Face</string>
     <string name="search_targets">Search targets…</string>
     <string name="import_custom">Import from Gallery</string>
-    <string name="select_source">Select Your Photo</string>
+    <string name="import_hint">Import a real photo for best detection results</string>
+
+    <!-- Upload screen -->
+    <string name="select_source">Upload Your Photo</string>
+    <string name="upload_zone_hint">Tap to select a clear, front-facing photo\n(Both eyes fully visible)</string>
+    <string name="change_photo">Change Photo</string>
     <string name="morph_now">Morph Now</string>
+    <string name="face_detected">✓ Face detected · %d landmarks</string>
+    <string name="face_detected_low_conf">⚠ Face detected (low confidence) · %d landmarks</string>
+
+    <!-- Processing screen -->
     <string name="processing_title">Creating your morph…</string>
+    <string name="pipeline_label">Morphing Pipeline</string>
     <string name="cancel">Cancel</string>
+
+    <!-- Result screen -->
+    <string name="result_title">Your Morph</string>
+    <string name="drag_to_compare">← Drag to compare →</string>
     <string name="save">Save to Gallery</string>
     <string name="share">Share</string>
-    <string name="try_another">Try Another Face</string>
+    <string name="try_another">Try Another</string>
     <string name="before">Before</string>
     <string name="after">After</string>
+
+    <!-- Errors -->
     <string name="error_no_face">No face found. Try a clearer, well-lit photo.</string>
-    <string name="error_low_confidence">Face detected, but confidence is low. Result may be imperfect.</string>
+    <string name="error_low_confidence">Confidence is low — result may be imperfect.</string>
+    <string name="error_face_too_small">Face too small. Move closer to the camera.</string>
     <string name="error_model_missing">Model not found. Please reinstall the app.</string>
     <string name="error_oom_retry">Image too large — downsampling and retrying…</string>
     <string name="multiple_faces_prompt">Multiple faces detected. Tap the one to morph.</string>
+
+    <!-- Privacy -->
     <string name="privacy_title">Your privacy matters</string>
     <string name="privacy_body_1">All processing happens on your device.</string>
     <string name="privacy_body_2">We never upload your photos.</string>
     <string name="privacy_body_3">No internet connection is used — ever.</string>
     <string name="privacy_body_4">Your morphs are stored only in your device gallery.</string>
     <string name="privacy_accept">Got it, let\'s go!</string>
+
+    <!-- Settings -->
     <string name="settings">Settings</string>
     <string name="gpu_acceleration">GPU Acceleration</string>
     <string name="output_quality">Output Quality</string>
     <string name="save_original">Save Original Alongside Result</string>
+    <string name="about">About</string>
+    <string name="version">Version</string>
+
+    <!-- Crash log -->
     <string name="crash_log_title">Crash Log</string>
     <string name="crash_log_empty">No crashes recorded.</string>
     <string name="crash_log_share">Share via Email</string>
     <string name="crash_log_clear">Clear Log</string>
-    <string name="about">About</string>
-    <string name="version">Version</string>
+
+    <!-- Processing step labels -->
     <string name="step_segmentation">Segmenting face region…</string>
     <string name="step_alignment">Aligning faces…</string>
     <string name="step_warp">Warping geometry…</string>
-    <string name="step_blend">Blending colors…</string>
-    <string name="step_postprocess">Smoothing result…</string>
+    <string name="step_blend">Poisson blending…</string>
+    <string name="step_color_correction">Matching skin tone…</string>
+    <string name="step_postprocess">Smoothing edges…</string>
+
+    <!-- Metadata chips -->
     <string name="processing_time_ms">%d ms</string>
     <string name="landmark_count">%d landmarks</string>
     <string name="morph_mode_cpu">CPU mode</string>
     <string name="morph_mode_gpu">GPU mode</string>
+
+    <!-- Quality levels -->
     <string name="quality_low">Low</string>
     <string name="quality_medium">Medium</string>
     <string name="quality_high">High</string>

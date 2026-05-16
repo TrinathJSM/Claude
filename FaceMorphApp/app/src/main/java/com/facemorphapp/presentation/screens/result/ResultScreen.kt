@@ -1,14 +1,12 @@
 package com.facemorphapp.presentation.screens.result
 
 import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoFixHigh
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,9 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -42,7 +42,7 @@ fun ResultScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Your Morph", fontWeight = FontWeight.Bold) })
+            TopAppBar(title = { Text(stringResource(R.string.result_title), fontWeight = FontWeight.Bold) })
         }
     ) { padding ->
         Column(
@@ -50,8 +50,39 @@ fun ResultScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Step 3 banner
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+                    Text(
+                        text = stringResource(R.string.step_3_of_3),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(R.string.step_3_instruction),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+
+            // Drag instruction
+            Text(
+                text = stringResource(R.string.drag_to_compare),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+
             // Before/After slider
             BeforeAfterSlider(
                 beforeUri = sourceUri,
@@ -65,14 +96,8 @@ fun ResultScreen(
 
             // Metadata chips
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SuggestionChip(
-                    onClick = {},
-                    label = { Text(durationMs.formatDuration()) }
-                )
-                SuggestionChip(
-                    onClick = {},
-                    label = { Text("$landmarkCount landmarks") }
-                )
+                SuggestionChip(onClick = {}, label = { Text(durationMs.formatDuration()) })
+                SuggestionChip(onClick = {}, label = { Text("$landmarkCount pts") })
                 SuggestionChip(
                     onClick = {},
                     label = {
@@ -90,17 +115,16 @@ fun ResultScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(stringResource(R.string.share))
                 }
-
                 Button(
                     onClick = onTryAnother,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(Icons.Default.AutoFixHigh, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(stringResource(R.string.try_another))
                 }
             }
@@ -108,10 +132,6 @@ fun ResultScreen(
     }
 }
 
-/**
- * Custom Before/After reveal slider composable.
- * Drag horizontally to reveal before (source) on the left and after (result) on the right.
- */
 @Composable
 private fun BeforeAfterSlider(
     beforeUri: Uri,
@@ -121,6 +141,7 @@ private fun BeforeAfterSlider(
     modifier: Modifier = Modifier
 ) {
     var layoutWidth by remember { mutableFloatStateOf(1f) }
+    val density = LocalDensity.current
 
     Box(
         modifier = modifier
@@ -132,7 +153,7 @@ private fun BeforeAfterSlider(
                 }
             }
     ) {
-        // "After" image (full width, behind)
+        // After image (full width, behind)
         AsyncImage(
             model = afterUri,
             contentDescription = stringResource(R.string.after),
@@ -140,8 +161,8 @@ private fun BeforeAfterSlider(
             modifier = Modifier.fillMaxSize()
         )
 
-        // "Before" image (clipped to left portion by slider)
-        androidx.compose.foundation.layout.Box(
+        // Before image (clipped to left portion by slider)
+        Box(
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(sliderPosition)
@@ -155,28 +176,30 @@ private fun BeforeAfterSlider(
             )
         }
 
-        // Divider line
+        // Divider handle
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .width(2.dp)
+                .width(3.dp)
                 .align(Alignment.CenterStart)
-                .offset(x = with(androidx.compose.ui.platform.LocalDensity.current) {
-                    (layoutWidth * sliderPosition / density).dp
-                })
+                .offset(x = with(density) { (layoutWidth * sliderPosition / this.density).dp })
                 .background(MaterialTheme.colorScheme.primary)
         )
 
-        // Labels
-        Row(
+        // Corner labels
+        AssistChip(
+            onClick = {},
+            label = { Text(stringResource(R.string.before), style = MaterialTheme.typography.labelSmall) },
             modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            AssistChip(onClick = {}, label = { Text(stringResource(R.string.before)) })
-            AssistChip(onClick = {}, label = { Text(stringResource(R.string.after)) })
-        }
+                .align(Alignment.BottomStart)
+                .padding(8.dp)
+        )
+        AssistChip(
+            onClick = {},
+            label = { Text(stringResource(R.string.after), style = MaterialTheme.typography.labelSmall) },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(8.dp)
+        )
     }
 }

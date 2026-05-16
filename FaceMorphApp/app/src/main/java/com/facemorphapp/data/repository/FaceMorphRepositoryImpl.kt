@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.io.InputStream
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -48,7 +49,8 @@ class FaceMorphRepositoryImpl @Inject constructor(
                 stepProgress = ep.stepProgress,
                 overallProgress = ep.overallProgress,
                 frameIndex = ep.frameIndex,
-                totalFrames = ep.totalFrames
+                totalFrames = ep.totalFrames,
+                result = ep.result
             )
         }
 
@@ -88,21 +90,40 @@ class FaceMorphRepositoryImpl @Inject constructor(
     override suspend fun loadBitmapFromUri(uri: Uri): Result<Bitmap> =
         withContext(Dispatchers.IO) {
             runCatching {
+                val stream: InputStream = openInputStream(uri)
+                    ?: throw IOException("Cannot open stream for URI: $uri")
+
+                // Sample down large images to stay within the 1024-edge budget
                 val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                context.contentResolver.openInputStream(uri)?.use {
-                    BitmapFactory.decodeStream(it, null, opts)
-                }
+                stream.use { BitmapFactory.decodeStream(it, null, opts) }
+
                 val maxEdge = max(opts.outWidth, opts.outHeight)
                 val sampleSize = if (maxEdge > 1024) maxEdge / 1024 else 1
+
                 val decodeOpts = BitmapFactory.Options().apply {
                     inSampleSize = sampleSize
                     inPreferredConfig = Bitmap.Config.ARGB_8888
                 }
-                context.contentResolver.openInputStream(uri)?.use {
-                    BitmapFactory.decodeStream(it, null, decodeOpts)
-                } ?: throw IOException("Cannot open stream for URI: $uri")
+
+                val stream2: InputStream = openInputStream(uri)
+                    ?: throw IOException("Cannot open stream for URI: $uri")
+                stream2.use { BitmapFactory.decodeStream(it, null, decodeOpts) }
+                    ?: throw IOException("BitmapFactory returned null for URI: $uri")
             }
         }
+
+    /**
+     * Opens an InputStream for [uri], handling both regular content/file URIs and
+     * bundled asset URIs in the form file:///android_asset/<path>.
+     */
+    private fun openInputStream(uri: Uri): InputStream? {
+        val path = uri.path
+        if (uri.scheme == "file" && path != null && path.startsWith("/android_asset/")) {
+            val assetPath = path.removePrefix("/android_asset/")
+            return context.assets.open(assetPath)
+        }
+        return context.contentResolver.openInputStream(uri)
+    }
 
     private fun MorphResult.toEntity() = MorphResultEntity(
         id = id, sourceUri = sourceUri, targetUri = targetUri,

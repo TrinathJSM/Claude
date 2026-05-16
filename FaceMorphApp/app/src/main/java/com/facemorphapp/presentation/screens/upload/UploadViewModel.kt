@@ -5,12 +5,16 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facemorphapp.domain.model.FaceDetectionResult
+import com.facemorphapp.domain.model.FaceValidationResult
 import com.facemorphapp.domain.usecase.DetectFaceUseCase
 import com.facemorphapp.domain.repository.FaceMorphRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+private const val MIN_CONFIDENCE = 0.70f
+private const val MIN_FACE_FRACTION = 0.03f
 
 data class UploadUiState(
     val sourceUri: Uri? = null,
@@ -19,7 +23,7 @@ data class UploadUiState(
     val selectedFace: FaceDetectionResult? = null,
     val isDetecting: Boolean = false,
     val error: String? = null,
-    val lowConfidenceWarning: Boolean = false,
+    val validationResult: FaceValidationResult? = null,
     val multipleFacesDialogVisible: Boolean = false
 )
 
@@ -34,7 +38,7 @@ class UploadViewModel @Inject constructor(
 
     fun onImageSelected(uri: Uri) {
         viewModelScope.launch {
-            _uiState.update { it.copy(sourceUri = uri, isDetecting = true, error = null) }
+            _uiState.update { it.copy(sourceUri = uri, isDetecting = true, error = null, validationResult = null) }
 
             val result = repository.loadBitmapFromUri(uri)
             if (result.isFailure) {
@@ -50,28 +54,61 @@ class UploadViewModel @Inject constructor(
     private suspend fun runDetection(bitmap: Bitmap) {
         detectFace(bitmap)
             .onSuccess { faces ->
-                when {
-                    faces.isEmpty() -> _uiState.update {
-                        it.copy(isDetecting = false, error = "No face found. Try a clearer, well-lit photo.")
-                    }
-                    faces.size == 1 -> {
-                        val face = faces.first()
+                val validation: FaceValidationResult = when {
+                    faces.isEmpty() -> FaceValidationResult.NoFace
+                    faces.size > 1 -> FaceValidationResult.MultipleFaces(faces)
+                    faces.first().boundingBox.let { it.width() * it.height() } <
+                        bitmap.width * bitmap.height * MIN_FACE_FRACTION ->
+                        FaceValidationResult.TooSmall
+                    faces.first().confidence < MIN_CONFIDENCE ->
+                        FaceValidationResult.LowConfidence
+                    else -> FaceValidationResult.Valid(faces.first())
+                }
+
+                when (validation) {
+                    is FaceValidationResult.Valid ->
                         _uiState.update {
                             it.copy(
                                 isDetecting = false,
                                 detectedFaces = faces,
-                                selectedFace = face,
-                                lowConfidenceWarning = face.confidence < 0.85f
+                                selectedFace = validation.result,
+                                validationResult = validation
                             )
                         }
-                    }
-                    else -> _uiState.update {
-                        it.copy(
-                            isDetecting = false,
-                            detectedFaces = faces,
-                            multipleFacesDialogVisible = true
-                        )
-                    }
+                    is FaceValidationResult.MultipleFaces ->
+                        _uiState.update {
+                            it.copy(
+                                isDetecting = false,
+                                detectedFaces = faces,
+                                multipleFacesDialogVisible = true,
+                                validationResult = validation
+                            )
+                        }
+                    is FaceValidationResult.LowConfidence ->
+                        _uiState.update {
+                            it.copy(
+                                isDetecting = false,
+                                detectedFaces = faces,
+                                selectedFace = faces.first(),
+                                validationResult = validation
+                            )
+                        }
+                    is FaceValidationResult.TooSmall ->
+                        _uiState.update {
+                            it.copy(
+                                isDetecting = false,
+                                validationResult = validation,
+                                error = "Face is too small. Move closer to the camera."
+                            )
+                        }
+                    is FaceValidationResult.NoFace ->
+                        _uiState.update {
+                            it.copy(
+                                isDetecting = false,
+                                validationResult = validation,
+                                error = "No face detected. Use a clear, well-lit, front-facing photo."
+                            )
+                        }
                 }
             }
             .onFailure { e ->
@@ -84,7 +121,10 @@ class UploadViewModel @Inject constructor(
             it.copy(
                 selectedFace = face,
                 multipleFacesDialogVisible = false,
-                lowConfidenceWarning = face.confidence < 0.85f
+                validationResult = if (face.confidence < MIN_CONFIDENCE)
+                    FaceValidationResult.LowConfidence
+                else
+                    FaceValidationResult.Valid(face)
             )
         }
     }

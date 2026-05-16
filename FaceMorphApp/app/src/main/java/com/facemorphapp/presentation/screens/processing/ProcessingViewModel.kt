@@ -6,11 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facemorphapp.domain.model.FaceDetectionResult
 import com.facemorphapp.domain.model.MorphMode
-import com.facemorphapp.domain.model.MorphProgress
 import com.facemorphapp.domain.model.MorphResult
 import com.facemorphapp.domain.model.MorphStep
 import com.facemorphapp.domain.repository.FaceMorphRepository
-import com.facemorphapp.domain.repository.SettingsRepository
 import com.facemorphapp.domain.usecase.MorphFaceUseCase
 import com.facemorphapp.engine.FaceMorphEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +20,7 @@ import javax.inject.Inject
 data class ProcessingUiState(
     val progress: Float = 0f,
     val stepLabel: String = "",
+    val currentStep: MorphStep? = null,
     val isComplete: Boolean = false,
     val resultUri: Uri? = null,
     val error: String? = null,
@@ -34,7 +33,6 @@ data class ProcessingUiState(
 class ProcessingViewModel @Inject constructor(
     private val morphFace: MorphFaceUseCase,
     private val repository: FaceMorphRepository,
-    private val settings: SettingsRepository,
     private val engine: FaceMorphEngine
 ) : ViewModel() {
 
@@ -54,7 +52,6 @@ class ProcessingViewModel @Inject constructor(
             val startTime = System.currentTimeMillis()
             _uiState.update { it.copy(morphMode = engine.morphMode) }
 
-            // Sequential suspend calls — no non-suspend lambda wrappers needed
             val srcResult = repository.loadBitmapFromUri(sourceUri)
             if (srcResult.isFailure) {
                 _uiState.update { it.copy(error = srcResult.exceptionOrNull()?.message ?: "Failed to load source image") }
@@ -69,13 +66,23 @@ class ProcessingViewModel @Inject constructor(
             val srcBitmap = srcResult.getOrThrow()
             val tgtBitmap = tgtResult.getOrThrow()
 
+            // Always detect the target face from the actual target bitmap so we use
+            // real contour landmarks, not the sourceFace fallback from NavStore.
+            val effectiveTargetFace = repository.detectFaces(tgtBitmap)
+                .getOrNull()
+                ?.firstOrNull()
+                ?: targetFace
+
             try {
-                morphFace(srcBitmap, tgtBitmap, sourceFace, targetFace)
+                morphFace(srcBitmap, tgtBitmap, sourceFace, effectiveTargetFace)
                     .collect { progress ->
+                        // Capture result bitmap from the final emission
+                        progress.result?.let { resultBitmap = it }
                         _uiState.update {
                             it.copy(
                                 progress = progress.overallProgress,
-                                stepLabel = progress.step.label
+                                stepLabel = progress.step.label,
+                                currentStep = progress.step
                             )
                         }
                     }
@@ -91,7 +98,7 @@ class ProcessingViewModel @Inject constructor(
                         resultUri = savedUri.toString(),
                         createdAt = System.currentTimeMillis(),
                         durationMs = elapsed,
-                        landmarkCount = sourceFace.landmarks.size,
+                        landmarkCount = effectiveTargetFace.landmarks.size,
                         morphMode = engine.morphMode
                     )
                 )
@@ -100,7 +107,7 @@ class ProcessingViewModel @Inject constructor(
                         isComplete = true,
                         resultUri = savedUri,
                         durationMs = elapsed,
-                        landmarkCount = sourceFace.landmarks.size,
+                        landmarkCount = effectiveTargetFace.landmarks.size,
                         progress = 1f
                     )
                 }
@@ -121,4 +128,3 @@ class ProcessingViewModel @Inject constructor(
         cancel()
     }
 }
-

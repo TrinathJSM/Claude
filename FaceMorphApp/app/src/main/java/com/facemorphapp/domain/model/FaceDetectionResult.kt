@@ -6,6 +6,7 @@ import android.graphics.RectF
 data class FaceDetectionResult(
     val boundingBox: RectF,
     val landmarks: List<PointF>,
+    val faceOutline: List<PointF>,
     val confidence: Float,
     val leftEyeCenter: PointF,
     val rightEyeCenter: PointF,

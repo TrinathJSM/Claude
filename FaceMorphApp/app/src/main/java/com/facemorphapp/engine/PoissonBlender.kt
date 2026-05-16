@@ -29,7 +29,7 @@ import kotlin.math.sqrt
  */
 object PoissonBlender {
 
-    private const val JACOBI_ITERATIONS = 20
+    private const val JACOBI_ITERATIONS = 50
     private const val DOWNSAMPLE_SIZE = 256  // solver runs on 256×256 max
 
     /**
