@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -75,7 +76,7 @@ fun ResultScreen(
                 }
             }
 
-            // Drag instruction
+            // Drag hint — single occurrence above the slider
             Text(
                 text = stringResource(R.string.drag_to_compare),
                 style = MaterialTheme.typography.labelMedium,
@@ -101,9 +102,10 @@ fun ResultScreen(
                 SuggestionChip(
                     onClick = {},
                     label = {
-                        Text(if (morphMode == MorphMode.GPU)
-                            stringResource(R.string.morph_mode_gpu)
-                        else stringResource(R.string.morph_mode_cpu))
+                        Text(
+                            if (morphMode == MorphMode.GPU) stringResource(R.string.morph_mode_gpu)
+                            else stringResource(R.string.morph_mode_cpu)
+                        )
                     }
                 )
             }
@@ -140,20 +142,23 @@ private fun BeforeAfterSlider(
     onSliderChanged: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var layoutWidth by remember { mutableFloatStateOf(1f) }
+    var layoutWidthPx by remember { mutableFloatStateOf(1f) }
     val density = LocalDensity.current
+    // Convert pixel slider position to Dp for the divider offset
+    val dividerOffsetDp = with(density) { (layoutWidthPx * sliderPosition).toDp() }
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
+            .onSizeChanged { layoutWidthPx = it.width.toFloat() }
             .pointerInput(Unit) {
                 detectHorizontalDragGestures { _, dragAmount ->
-                    val newPos = (sliderPosition + dragAmount / layoutWidth).coerceIn(0f, 1f)
+                    val newPos = (sliderPosition + dragAmount / layoutWidthPx).coerceIn(0f, 1f)
                     onSliderChanged(newPos)
                 }
             }
     ) {
-        // After image (full width, behind)
+        // After image — full width, behind
         AsyncImage(
             model = afterUri,
             contentDescription = stringResource(R.string.after),
@@ -161,7 +166,7 @@ private fun BeforeAfterSlider(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Before image (clipped to left portion by slider)
+        // Before image — clipped to left portion based on slider
         Box(
             modifier = Modifier
                 .fillMaxHeight()
@@ -176,30 +181,50 @@ private fun BeforeAfterSlider(
             )
         }
 
-        // Divider handle
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(3.dp)
-                .align(Alignment.CenterStart)
-                .offset(x = with(density) { (layoutWidth * sliderPosition / this.density).dp })
-                .background(MaterialTheme.colorScheme.primary)
-        )
+        // Divider line — only shown after layout width is known
+        if (layoutWidthPx > 1f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(3.dp)
+                    .align(Alignment.CenterStart)
+                    .offset(x = dividerOffsetDp)
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+        }
 
-        // Corner labels
-        AssistChip(
-            onClick = {},
-            label = { Text(stringResource(R.string.before), style = MaterialTheme.typography.labelSmall) },
+        // Corner labels — Box+Text avoids AssistChip double-render artefact
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(8.dp)
-        )
-        AssistChip(
-            onClick = {},
-            label = { Text(stringResource(R.string.after), style = MaterialTheme.typography.labelSmall) },
+                .background(
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.75f),
+                    RoundedCornerShape(6.dp)
+                )
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.before),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(8.dp)
-        )
+                .background(
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.75f),
+                    RoundedCornerShape(6.dp)
+                )
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.after),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }
