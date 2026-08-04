@@ -1,0 +1,20 @@
+const EARTH_RADIUS_METERS = 6371000;
+
+function toRadians(degrees) {
+  return (degrees * Math.PI) / 180;
+}
+
+// Haversine distance between two lat/lng points, in meters.
+// Mirrors backend/src/utils/geo.js — used only for the live "distance from
+// office" readout on screen. The server independently re-checks this on
+// every punch, since the client's own reading can't be trusted for the
+// pass/fail decision.
+export function distanceMeters(lat1, lng1, lat2, lng2) {
+  const dLat = toRadians(lat2 - lat1);
+  const dLng = toRadians(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return EARTH_RADIUS_METERS * c;
+}

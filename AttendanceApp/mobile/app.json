@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "JSM Attendance",
+    "slug": "jsm-attendance",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "in.jsmcomposites.attendance",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "JSM Attendance checks your location only when you punch in or out, to confirm you are physically at the office.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "JSM Attendance checks your location only when you punch in or out, to confirm you are physically at the office."
+      }
+    },
+    "android": {
+      "package": "in.jsmcomposites.attendance",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "JSM Attendance checks your location only when you punch in or out, to confirm you are physically at the office."
+        }
+      ]
+    ]
+  }
+}
