@@ -10,8 +10,8 @@ function seed() {
        VALUES (?, ?, ?, ?, 1)`
     ).run(
       'JSM Composites Head Office',
-      Number(process.env.OFFICE_LAT || 17.4239),
-      Number(process.env.OFFICE_LNG || 78.4738),
+      Number(process.env.OFFICE_LAT || 19.060146260998735),
+      Number(process.env.OFFICE_LNG || 73.02593298023692),
       Number(process.env.OFFICE_RADIUS_METERS || 150)
     );
     console.log('Seeded office location.');
